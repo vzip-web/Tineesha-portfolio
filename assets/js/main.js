@@ -24,20 +24,32 @@ const works = {
 };
 const drive = "https://drive.google.com/drive/folders/1VNSSyg3D92JFFdVuxlCNAdddOvlXLphO";
 
-// Small, fixed-size decorative images. Mobile uses a static twelve-image wall.
+// Three compositor-only sliding rows; paired groups make each loop seamless.
 const wall = $("wall");
-for (let row=0;row<3;row++) {
-  const line=document.createElement("div"); line.className="r";
-  const perRow=compact?4:6;
-  for (let i=0;i<perRow;i++) {
-    const img=document.createElement("img");
-    img.src=P[(row*4+i%perRow)%P.length];img.alt="";
-    img.width=240;img.height=300;img.decoding="async";
-    img.fetchPriority=row===0?"auto":"low";
-    line.append(img);
+let wallWidth = 0;
+function buildWall() {
+  if(wallWidth===innerWidth)return;
+  wallWidth=innerWidth;
+  const perRow=Math.max(4,Math.ceil((innerWidth*1.24+innerHeight*.16)/(innerHeight*.248+16)));
+  const rows=document.createDocumentFragment();
+  for (let row=0;row<3;row++) {
+    const line=document.createElement("div");line.className="r";
+    for(let copy=0;copy<2;copy++) {
+      const group=document.createElement("div");group.className="wall-set";
+      for(let i=0;i<perRow;i++) {
+        const img=document.createElement("img");
+        img.src=P[(row*4+i)%P.length];img.alt="";
+        img.width=240;img.height=300;img.decoding="async";
+        img.fetchPriority=row===0?"auto":"low";
+        group.append(img);
+      }
+      line.append(group);
+    }
+    rows.append(line);
   }
-  wall.append(line);
+  wall.replaceChildren(rows);
 }
+buildWall();
 const marquee=$("mq");
 for(let copy=0;copy<(compact?2:4);copy++) {
   for(const logo of LGS) {
@@ -78,6 +90,7 @@ function measure() {
 function queueMeasure(){if(!measureFrame)measureFrame=requestAnimationFrame(measure)}
 addEventListener("scroll",()=>{if(!scrollFrame)scrollFrame=requestAnimationFrame(updateScroll)},{passive:true});
 addEventListener("resize",()=>{
+  buildWall();
   if(innerWidth>900)closeMenu();
   if(currentPage&&columnCount(currentPage)!==galleryColumns)buildGallery(currentPage);
   queueMeasure();
