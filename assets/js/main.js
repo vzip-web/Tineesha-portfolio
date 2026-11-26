@@ -5,7 +5,8 @@ const P=["./assets/images/hero-01.webp","./assets/images/hero-02.webp","./assets
 const G=[{"s":"./assets/images/work-01-food-beverage-show.webp","t":"Food & Beverage Show","g":"Event poster · Highrise","w":720,"h":900},{"s":"./assets/images/work-02-kevin-smokio.webp","t":"Kevin Smokio","g":"Cover art","w":720,"h":900},{"s":"./assets/images/work-03-koombiyo.webp","t":"Koombiyo","g":"Film poster","w":720,"h":900},{"s":"./assets/images/work-04-manasick.webp","t":"Manasick","g":"Artist poster","w":720,"h":900},{"s":"./assets/images/work-05-channuka.webp","t":"Channuka","g":"Single cover art","w":720,"h":900},{"s":"./assets/images/work-06-cozzy.webp","t":"Cozzy","g":"Single cover art","w":720,"h":900},{"s":"./assets/images/work-07-one-shot.webp","t":"One Shot","g":"Cover art · Ranjan Ramanayaka","w":720,"h":900},{"s":"./assets/images/work-08-ramesses-reezy.webp","t":"Ramesses Reezy","g":"Tour poster · Iconography","w":720,"h":900},{"s":"./assets/images/work-09-yevan-david.webp","t":"Yevan David","g":"Athlete poster · AIX Racing","w":720,"h":900},{"s":"./assets/images/work-10-hnb-assurance.webp","t":"HNB Assurance","g":"Social ad","w":900,"h":900},{"s":"./assets/images/work-11-inspire-college.webp","t":"Inspire College","g":"Social ad · Learn without limits","w":720,"h":900},{"s":"./assets/images/work-12-inspire-college.webp","t":"Inspire College","g":"Social ad · After O/Ls","w":900,"h":900},{"s":"./assets/images/work-13-inspire-college.webp","t":"Inspire College","g":"Festive post · Eid Al-Adha","w":900,"h":900}];
 "use strict";
 const $ = id => document.getElementById(id);
-const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const motionPreference = matchMedia("(prefers-reduced-motion: reduce)");
+let reduceMotion = motionPreference.matches;
 const compact = matchMedia("(max-width: 900px)").matches;
 const nav = document.querySelector("nav");
 const navLinks = [...nav.querySelectorAll(".nl a")];
@@ -26,6 +27,24 @@ const drive = "https://drive.google.com/drive/folders/1VNSSyg3D92JFFdVuxlCNAdddO
 
 // Three compositor-only sliding rows; paired groups make each loop seamless.
 const wall = $("wall");
+const hero = $("home");
+const heroCopy = $("hero-copy");
+const nativeHeroTimeline = typeof CSS!=="undefined" && CSS.supports("animation-timeline: view()");
+let heroHeight = innerHeight;
+let heroTop = 0;
+let lastHeroProgress = -1;
+function updateHeroExit(y) {
+  if(reduceMotion||nativeHeroTimeline||currentPage)return;
+  const p=Math.min(1,Math.max(0,(y-heroTop)/heroHeight));
+  if(p===lastHeroProgress)return;
+  lastHeroProgress=p;
+  const endScale=innerWidth<=900?1.4:1.9;
+  wall.style.transform="rotate("+(-7+p*8)+"deg) scale("+(1+p*(endScale-1))+")";
+  wall.style.opacity=String(.55*(1-Math.max(0,(p-.2)/.8)));
+  const textProgress=Math.min(1,p/.78);
+  heroCopy.style.transform="translate3d(0,"+(-48*textProgress)+"px,0) scale("+(1+.18*textProgress)+")";
+  heroCopy.style.opacity=String(1-textProgress);
+}
 let wallWidth = 0;
 function buildWall() {
   if(wallWidth===innerWidth)return;
@@ -69,6 +88,7 @@ let measureFrame=0;
 function updateScroll() {
   scrollFrame=0;
   const y=scrollY;
+  updateHeroExit(y);
   $("sp").style.transform="scaleX("+Math.min(1,Math.max(0,y/maxScroll))+")";
   let active=currentPage?"works":"home";
   if(!currentPage)for(const s of sectionPositions)if(s.top<=y+innerHeight*.4)active=s.id;
@@ -83,11 +103,22 @@ function updateScroll() {
 }
 function measure() {
   measureFrame=0;
+  if(!currentPage){
+    const heroRect=hero.getBoundingClientRect();
+    heroHeight=Math.max(1,heroRect.height);
+    heroTop=heroRect.top+scrollY;
+  }
+  lastHeroProgress=-1;
   sectionPositions=navLinks.map(link=>{const el=document.querySelector(link.hash);return {id:el.id,top:el.getBoundingClientRect().top+scrollY}});
   maxScroll=Math.max(1,root.scrollHeight-innerHeight);
   updateScroll();
 }
 function queueMeasure(){if(!measureFrame)measureFrame=requestAnimationFrame(measure)}
+motionPreference.addEventListener("change",event=>{
+  reduceMotion=event.matches;
+  for(const layer of [wall,heroCopy]){layer.style.removeProperty("transform");layer.style.removeProperty("opacity")}
+  queueMeasure();
+});
 addEventListener("scroll",()=>{if(!scrollFrame)scrollFrame=requestAnimationFrame(updateScroll)},{passive:true});
 addEventListener("resize",()=>{
   buildWall();
