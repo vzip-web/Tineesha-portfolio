@@ -343,7 +343,12 @@ nav::before{animation:none;background-position:50% 0}
 nav .pill,.nl,.ind{-webkit-backdrop-filter:none;backdrop-filter:none}
 .pill,.btn,.sub,.card,.chip,.mc a{transition:transform .18s ease,border-color .18s ease,background-color .18s ease,color .18s ease}
 .wall{will-change:auto;backface-visibility:visible;transform:rotate(-7deg);contain:paint}
-.wall .r{animation:none!important}
+.wall .r{gap:0;animation:hero-slide 70s linear infinite;will-change:transform}
+.wall .r:nth-child(2){animation-direction:reverse;animation-duration:90s}
+.wall .r:nth-child(3){animation-duration:80s}
+.wall-set{display:flex;flex:none;gap:16px;padding-right:16px}
+.wall.off .r{will-change:auto}
+@keyframes hero-slide{from{transform:translate3d(0,0,0)}to{transform:translate3d(-50%,0,0)}}
 .wall img{width:24.8vh;height:31vh;object-fit:cover}
 .fl,.lgl,.curtain{display:none!important}
 .po{animation:none;filter:none;opacity:.18}
@@ -388,5 +393,5 @@ nav .pill,.nl,.ind{-webkit-backdrop-filter:none;backdrop-filter:none}
 @media (prefers-reduced-motion:reduce){
   html{scroll-behavior:auto}
   .reveal{opacity:1;transform:none;transition:none}
-  .fr.in,.pg-d,.pg-hero .tags,.pg-row,.mq div{animation:none!important}
+  .fr.in,.pg-d,.pg-hero .tags,.pg-row,.mq div,.wall .r{animation:none!important}
 }
